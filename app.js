@@ -4,7 +4,8 @@ const mongoose = require('mongoose');
 const _=require("lodash");
 const date = require(__dirname + "/date.js");
 // We can create our own modules that call them when required
-
+mongoose.set('useFindAndModify', false);
+//for deprecation warning
 
 const app = express();
 app.use(bodyParser.urlencoded({
@@ -98,13 +99,21 @@ app.get("/list/:listName", function(req, res) {
         res.redirect("/list/" + listName);
       } else {
         // console.log("Already exists");
-        if (foundList.items.length === 0) {
-          foundList.items.concat(defaultItems);
-        }
+        if(foundList.items.length===0){
+          List.updateOne({name:listName},{$push:{items:{$each:defaultItems}}},function(err){
+            if(err){
+              console.log(err);
+            }else{
+              console.log("Succesfully added default items again");
+            }
+          });
+          res.redirect("/list/"+listName);
+        }else{
           res.render("list", {
             listTitle: foundList.name,
             newListItems: foundList.items
           });
+        }
       }
     }
   });
